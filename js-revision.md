@@ -991,3 +991,402 @@ function greet() {
 
 greet();
 ```
+
+
+
+# Fetch API, AJAX, JSON & APIs
+
+## Table of Contents
+
+1. [What is an API?](#1-what-is-an-api)
+2. [Fetch API](#2-fetch-api)
+3. [AJAX](#3-ajax-asynchronous-javascript-and-xml)
+4. [JSON](#4-json-javascript-object-notation)
+5. [The `json()` Method](#5-the-json-method)
+6. [Using async / await](#6-using-async--await)
+7. [Response Object](#7-response-object)
+8. [HTTP Methods](#8-http-methods)
+9. [Sending Data with POST](#9-sending-data-with-post)
+10. [HTTP Status Codes](#10-http-status-codes)
+11. [Error Handling](#11-error-handling-important)
+12. [Other Important API Concepts](#12-other-important-api-concepts)
+13. [Quick Summary](#13-quick-summary)
+
+---
+
+## 1. What is an API?
+
+**API (Application Programming Interface)** is a set of rules that allows one piece of software to communicate with another.
+
+- A client (browser/app) sends a **request**.
+- A server processes it and sends back a **response**.
+- Most web APIs return data in **JSON** format.
+
+### Common Types of Web APIs
+
+| Type | Description |
+|------|-------------|
+| **REST** | Most common; uses HTTP methods and URLs (endpoints) |
+| **GraphQL** | Client asks for exactly the fields it needs from a single endpoint |
+| **SOAP** | Older, XML-based protocol |
+| **WebSocket** | Real-time, two-way communication |
+
+> Many free public APIs are available on the internet for practice (e.g. Cat Facts, JSONPlaceholder, PokeAPI, OpenWeatherMap).
+
+---
+
+## 2. Fetch API
+
+The **Fetch API** provides an interface for **sending and receiving resources** (data) over the network.
+
+### Key Points
+
+- Uses **Request** and **Response** objects.
+- Returns a **Promise**.
+- Replaces the older `XMLHttpRequest` (XHR) with a cleaner, modern syntax.
+- Built into modern browsers (also available in Node.js 18+).
+
+### Syntax
+
+```javascript
+fetch(url, options)
+```
+
+| Parameter | Description |
+|-----------|-------------|
+| `url` | The endpoint/resource to request |
+| `options` *(optional)* | Object with `method`, `headers`, `body`, etc. |
+
+### Basic Example (Promise Chaining)
+
+```javascript
+const URL = "https://cat-fact.herokuapp.com/facts";
+
+let promise = fetch(URL);
+
+promise
+  .then((response) => {
+    return response.json(); // parse the response body as JSON
+  })
+  .then((data) => {
+    console.log(data); // use the parsed data
+  })
+  .catch((error) => {
+    console.log("Error:", error); // handle network errors
+  });
+```
+
+### How It Works (Flow)
+
+```
+fetch(URL)
+   │
+   ▼
+Promise (pending)
+   │
+   ▼
+Response object  ──►  response.json()  ──►  Promise
+                                              │
+                                              ▼
+                                       JavaScript data
+```
+
+---
+
+## 3. AJAX (Asynchronous JavaScript and XML)
+
+AJAX is a web development technique that allows JavaScript to communicate with a server **asynchronously**, without reloading the entire web page.
+
+### What AJAX Can Do
+
+- Send requests to a server.
+- Receive data from a server.
+- Update specific parts of a web page dynamically.
+
+> **Note:** Although AJAX originally used XML, modern applications commonly use **JSON** instead.
+
+### Ways to Make AJAX Calls
+
+| Method | Notes |
+|--------|-------|
+| `XMLHttpRequest` | Old way; verbose and callback-based |
+| `fetch()` | Modern, Promise-based |
+| `axios` (library) | Popular third-party library with extra features |
+
+---
+
+## 4. JSON (JavaScript Object Notation)
+
+JSON is a **lightweight, text-based data format** used for storing and exchanging data between a client and a server.
+
+- Represents data using **key-value pairs** and **arrays**.
+- Easy for both humans and programming languages to read.
+- Commonly used in APIs.
+
+### Example
+
+```json
+{
+  "name": "Rahul",
+  "age": 21,
+  "skills": ["HTML", "CSS", "JavaScript"],
+  "isStudent": true
+}
+```
+
+### JSON Rules
+
+- Keys must be in **double quotes** `" "`.
+- Strings must use **double quotes** (single quotes are invalid).
+- No trailing commas, no comments.
+- Supported value types: string, number, boolean, `null`, array, object.
+
+### JSON Methods in JavaScript
+
+| Method | Purpose | Example |
+|--------|---------|---------|
+| `JSON.stringify(obj)` | JS object → JSON string | `JSON.stringify({a: 1})` → `'{"a":1}'` |
+| `JSON.parse(str)` | JSON string → JS object | `JSON.parse('{"a":1}')` → `{a: 1}` |
+
+---
+
+## 5. The `json()` Method
+
+The `json()` method of the Fetch API **reads the response body and parses it as JSON**. It returns a **Promise** that resolves with the parsed JavaScript value.
+
+### Example
+
+```javascript
+fetch(URL)
+  .then((response) => response.json())
+  .then((data) => {
+    console.log(data);
+  });
+```
+
+`response.json()` converts the JSON response received from the server into a usable JavaScript value.
+
+### Other Body-Reading Methods
+
+| Method | Returns |
+|--------|---------|
+| `response.json()` | Parsed JSON (object/array) |
+| `response.text()` | Plain text |
+| `response.blob()` | Binary data (images, files) |
+| `response.formData()` | Form data |
+| `response.arrayBuffer()` | Raw binary buffer |
+
+> **Important:** The body can be read **only once**. Calling `json()` and then `text()` on the same response throws an error (use `response.clone()` if needed).
+
+---
+
+## 6. Using async / await
+
+`async/await` is a cleaner way to work with Promises and avoids long `.then()` chains.
+
+```javascript
+const URL = "https://cat-fact.herokuapp.com/facts";
+
+const getFacts = async () => {
+  try {
+    const response = await fetch(URL);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log(data);
+  } catch (error) {
+    console.log("Error:", error);
+  }
+};
+
+getFacts();
+```
+
+---
+
+## 7. Response Object
+
+The object returned by `fetch()` contains useful information about the response.
+
+| Property | Description |
+|----------|-------------|
+| `response.ok` | `true` if status is 200–299 |
+| `response.status` | HTTP status code (e.g. `200`, `404`) |
+| `response.statusText` | Status message (e.g. `"OK"`, `"Not Found"`) |
+| `response.headers` | Response headers |
+| `response.url` | URL of the response |
+
+---
+
+## 8. HTTP Methods
+
+| Method | Purpose | CRUD |
+|--------|---------|------|
+| `GET` | Retrieve data | Read |
+| `POST` | Send/create new data | Create |
+| `PUT` | Replace existing data completely | Update |
+| `PATCH` | Update part of existing data | Update |
+| `DELETE` | Remove data | Delete |
+
+> `fetch()` uses the **GET** method by default.
+
+---
+
+## 9. Sending Data with POST
+
+```javascript
+fetch("https://jsonplaceholder.typicode.com/posts", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    title: "Hello",
+    body: "This is my first post",
+    userId: 1,
+  }),
+})
+  .then((response) => response.json())
+  .then((data) => console.log(data))
+  .catch((error) => console.log("Error:", error));
+```
+
+### Fetch Options
+
+| Option | Description |
+|--------|-------------|
+| `method` | `GET`, `POST`, `PUT`, `PATCH`, `DELETE` |
+| `headers` | Extra info sent with the request (e.g. `Content-Type`, `Authorization`) |
+| `body` | Data to send (must be a string, `FormData`, etc. — use `JSON.stringify()` for objects) |
+| `mode` | `cors`, `no-cors`, `same-origin` |
+| `credentials` | Whether to send cookies (`include`, `same-origin`, `omit`) |
+
+---
+
+## 10. HTTP Status Codes
+
+| Range | Meaning | Examples |
+|-------|---------|----------|
+| **1xx** | Informational | `100 Continue` |
+| **2xx** | Success | `200 OK`, `201 Created`, `204 No Content` |
+| **3xx** | Redirection | `301 Moved Permanently`, `304 Not Modified` |
+| **4xx** | Client error | `400 Bad Request`, `401 Unauthorized`, `403 Forbidden`, `404 Not Found`, `429 Too Many Requests` |
+| **5xx** | Server error | `500 Internal Server Error`, `503 Service Unavailable` |
+
+---
+
+## 11. Error Handling (Important!)
+
+> **`fetch()` does NOT reject the Promise for HTTP errors like 404 or 500.**
+> It only rejects on **network failures** (no internet, DNS failure, CORS block, etc.).
+
+So always check `response.ok` manually:
+
+```javascript
+fetch(URL)
+  .then((response) => {
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    return response.json();
+  })
+  .then((data) => console.log(data))
+  .catch((error) => console.log("Error:", error));
+```
+
+---
+
+## 12. Other Important API Concepts
+
+### Endpoint
+A specific URL where an API can be accessed.
+Example: `https://api.example.com/users`
+
+### Query Parameters
+Extra data added to a URL after `?`, separated by `&`.
+
+```javascript
+fetch("https://api.example.com/users?page=2&limit=10");
+```
+
+### Path Parameters
+Part of the URL that identifies a specific resource.
+
+```
+https://api.example.com/users/5   →   user with id 5
+```
+
+### Headers
+Metadata sent with requests/responses.
+
+| Header | Purpose |
+|--------|---------|
+| `Content-Type` | Format of the data being sent (e.g. `application/json`) |
+| `Accept` | Format the client wants back |
+| `Authorization` | Credentials (e.g. `Bearer <token>`) |
+
+### Authentication
+
+| Type | Description |
+|------|-------------|
+| **API Key** | A unique key passed in the URL or header |
+| **Bearer Token / JWT** | Token sent in the `Authorization` header |
+| **OAuth** | Secure delegated access (e.g. "Login with Google") |
+
+```javascript
+fetch(URL, {
+  headers: {
+    Authorization: "Bearer YOUR_TOKEN_HERE",
+  },
+});
+```
+
+> **Never expose secret API keys in front-end code or public repositories.** Store them in environment variables on a backend server.
+
+### CORS (Cross-Origin Resource Sharing)
+A browser security feature that blocks requests to a different domain unless the server allows it via headers (e.g. `Access-Control-Allow-Origin`). A CORS error is fixed on the **server**, not in your fetch code.
+
+### Rate Limiting
+Many APIs limit how many requests you can make in a given time. Exceeding it returns `429 Too Many Requests`.
+
+### Synchronous vs Asynchronous
+
+| Synchronous | Asynchronous |
+|-------------|--------------|
+| Code runs line by line, blocking | Code continues while waiting for a task to finish |
+| Page can freeze | Page stays responsive |
+
+Fetch is **asynchronous**, which is why it uses Promises.
+
+### Promise States
+
+| State | Meaning |
+|-------|---------|
+| `pending` | Request in progress |
+| `fulfilled` | Request succeeded (`.then()` runs) |
+| `rejected` | Request failed (`.catch()` runs) |
+
+### Fetch vs Axios
+
+| Feature | Fetch | Axios |
+|---------|-------|-------|
+| Built-in | Yes | No (install required) |
+| Auto JSON parsing | No (`response.json()` needed) | Yes |
+| Rejects on HTTP errors (4xx/5xx) | No | Yes |
+| Request timeout | Needs `AbortController` | Built-in option |
+
+---
+
+## 13. Quick Summary
+
+- **API** → allows software to communicate.
+- **Fetch API** → modern, Promise-based way to make network requests.
+- **AJAX** → technique for updating a page without reloading.
+- **JSON** → lightweight text format for exchanging data.
+- **`response.json()`** → parses the response body into a JavaScript value (returns a Promise).
+- **`fetch()` only rejects on network errors** → always check `response.ok`.
+- Use **`async/await`** with **`try/catch`** for cleaner code.
+- Use **`JSON.stringify()`** when sending data and **`JSON.parse()`** when reading JSON strings.
